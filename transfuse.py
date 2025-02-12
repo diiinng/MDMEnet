@@ -68,36 +68,6 @@ class ResRGBSRMfuser(nn.Module):
         x = self.mlp_head(fused_features)
         return x
 
-# FAD Module
-class FAD_Head(nn.Module):
-    def __init__(self, size):
-        super(FAD_Head, self).__init__()
-
-        # init DCT matrix
-        self._DCT_all = nn.Parameter(torch.tensor(DCT_mat(size)).float(), requires_grad=False)
-        self._DCT_all_T = nn.Parameter(torch.transpose(torch.tensor(DCT_mat(size)).float(), 0, 1), requires_grad=False)
-
-        # define base filters and learnable
-        # 0 - 1/16 || 1/16 - 1/8 || 1/8 - 1
-        low_filter = Filter(size, 0, size // 2.82)
-        middle_filter = Filter(size, size // 2.82, size // 2)
-        high_filter = Filter(size, size // 2, size * 2)
-        all_filter = Filter(size, 0, size * 2)
-
-        self.filters = nn.ModuleList([low_filter, middle_filter, high_filter, all_filter])
-
-    def forward(self, x):
-        # DCT
-        x_freq = self._DCT_all @ x @ self._DCT_all_T    # [N, 3, h, w]
-
-        # 4 kernel
-        y_list = []
-        for i in range(4):
-            x_pass = self.filters[i](x_freq)  # [N, 3, h, w]
-            y = self._DCT_all_T @ x_pass @ self._DCT_all    # [N, 3, h, w]
-            y_list.append(y)
-        out = torch.cat(y_list, dim=1)    # [N, 12, h, w]
-        return out
 
 # Filter Module
 class Filter(nn.Module):
