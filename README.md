@@ -1,8 +1,8 @@
 # MDMEnet
-This repository is official implementation for Enhancing Face Forgery Detection through Multi-scale Dual-modality Mutual Enhancement Network
+This repository is official implementation for "Enhancing Face Forgery Detection through Multi-scale Dual-modality Mutual Enhancement Network"
 
 ## Dataset
-- detect benchmark deepfake datasets such as DFDC(DeepFake Detection Challenge)、FF++ (FaceForensics++)、CelebDF V2
+The model could detects benchmark deepfake datasets such as DFDC(DeepFake Detection Challenge)、FF++ (FaceForensics++)、CelebDF V2
 
 ## Getting Started
 ### requirements
