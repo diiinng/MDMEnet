@@ -1,6 +1,4 @@
-#处理数据是视频,如何测试抽取好的图像
-#不同模型要修改model_path，trainonDFDC
-#不同测试数据集要修改sample，label
+
 import sys, os
 import cv2
 from facenet_pytorch import MTCNN
@@ -23,9 +21,7 @@ import random
 from concurrent.futures import ThreadPoolExecutor
 
 from config_trafuse import GlobalConfigs
-from model.transfuse_effi0619 import RGBSRMfuser #backbone is efficientb0
-from model.transfuse2class import ResRGBSRMfuser  #backbone is resnet
-from model.transfuse import Res34Res18 #RES_RGBFAD
+from model.transfuse2class import ResRGBSRMfuser  
 
 sys.path.insert(1,'helpers')
 sys.path.insert(1,'model')
@@ -51,18 +47,10 @@ normalize_transform = transforms.Compose([
 )
 
 tresh=50
-sample='../../test-video/NeuralTextures/'
-#../../celeb-synthesis-test  ../../celeb-real-test  ../../youtube-real-test
-#sample__prediction_data/   ../CViT-main/preprocessing/dfdc_data/dfdc_train_part_49/
-#../../NeuralTextures/c40/videos/
-#../../test-video/Deepfakes/
-#../../coderepo/dataset/FaceSwap/c23/videos
-OUTPUT_DIR = 'result/'#保存结果图像
-model_path = 'weight/ResnetRGBSRM_ep35Pretrainbestacc.pth'#
-#能够预测的：
-# transfuse_efficientnetb0_ep35layer1AdammlpPretrain.pth #eff:RGB+FDA
-# RGBSRM_ep35layer1AdammlpPretrain.pth#eff:RGB SRM
-# ResnetRGBSRM_ep35Pretrainbestacc.pth  #resnet:RGBSRM
+sample=''
+OUTPUT_DIR = 'result/'
+model_path = 'weight/ResnetRGBSRM_ep35Pretrainbestacc.pth'
+
 trainonDFDC = True
 
 if not os.path.exists(OUTPUT_DIR):
@@ -159,7 +147,7 @@ def face_blaze(video_path, filename, face_tensor_blaze):
     return temp_blaze, count_blaze
 
 #y_pred=0
-def predict(filename, tresh, mtcnn):#单个视频的检测
+def predict(filename, tresh, mtcnn):
     store_faces=[]
     
     face_tensor_face_rec = np.zeros((30, 224, 224, 3), dtype=np.uint8)
@@ -275,7 +263,6 @@ def pre_process_prediction(y_pred):
     else:
         return torch.tensor(0.5)
     
-#=======一个视频中只要有一帧为假，这个视频即被判断为假。此段代码来自crossefficient=这里应用有问题，原代码里该函数是处理多个人脸情况，有任一人脸大于0.55则该视频判断为假==
 def custom_video_round(preds):
     #print('custom_video_round')    
     for pred_value in preds:
@@ -290,9 +277,7 @@ def custom_video_round(preds):
 
 
 #==========
-
-
-def getlabel(videodir,metadata):#获得测试视频对应的真实label
+def getlabel(videodir,metadata):
     framefiles = os.listdir(videodir)
     labellist = []
     for framefile in framefiles:
@@ -304,7 +289,7 @@ def getlabel(videodir,metadata):#获得测试视频对应的真实label
 
     return labellist
 
-def real_or_fake(filenames, predictions): #概率值转变为REAL/FAKE，并计算准确个数
+def real_or_fake(filenames, predictions): 
     j=0
     correct = 0
     label="REAL"
@@ -348,43 +333,26 @@ def save_roc_curves(correct_labels, preds, model_name, accuracy, loss, f1):
   plt.clf()
 
 
-
 start_time = perf_counter()
-predictions = predict_on_video(filenames, num_workers=1)  #num_workers从4改为1就能跑通了
+predictions = predict_on_video(filenames, num_workers=1)  
 print(predictions)
 end_time = perf_counter()
 print("--- %s seconds ---" % (end_time - start_time))
 predictlist = custom_round(predictions)
 
-
 ##metrics
-'''
+
 # for testing DFDC dataset
 metafile = sample+'metadata.json'
 if os.path.isfile(metafile):
     with open(metafile) as data_file:
         data = json.load(data_file)
 correct_labellist = getlabel(sample,data)
-
-'''
-#对于FF++数据集，所有子集的label都是fake，不需要metadata,celeb-df也可以
-print(sample)
-correct_labellist = []
-if 'youtube' or 'real' in sample:
-    #correct_labellist = []
-    for i in range(len(os.listdir(sample))):
-        correct_labellist.append(0)
-else:
-    print('ok')
-    for i in range(len(os.listdir(sample))):
-        correct_labellist.append(1)
-#'''
 print(correct_labellist)
 
-
-loss_fn = torch.nn.BCEWithLogitsLoss()#计算损失，输入需要tensor型
-tensor_labels = torch.tensor([float(label) for label in correct_labellist])#还要将数值转换为float
-tensor_preds = torch.tensor([float(predss) for predss in predictlist])#计算损失时不受用的是概率值
+loss_fn = torch.nn.BCEWithLogitsLoss()
+tensor_labels = torch.tensor([float(label) for label in correct_labellist])
+tensor_preds = torch.tensor([float(predss) for predss in predictlist])
 loss = loss_fn(tensor_preds, tensor_labels).numpy()
 
 #correct = real_or_fake(filenames, predictions)
@@ -393,26 +361,6 @@ accuracy2 = accuracy_score(predictlist, correct_labellist)
 
 f1 = f1_score(correct_labellist, predictlist)
 
-
 model_name = 'transfuse_res_RGBSRM'
 print(model_name, "Test Accuracy:", accuracy2, "Loss:", loss, "F1", f1)
 save_roc_curves(correct_labellist, predictlist, model_name, accuracy2, loss, f1)
-
-'''
-def real_or_fake(filenames, predictions): 
-    j=0
-    correct = 0
-    label="REAL"
-    for i in filenames:
-        if predictions[j]<0.5:
-            label="REAL"
-        if predictions[j]>=0.5:
-            label="FAKE"
-        
-        print('Filname:',i,label)
-        j+=1
-
-real_or_fake(filenames, predictions)#预测值转变为预测的真假
-submission_dfcvit_nov16 = pd.DataFrame({"filename": filenames, "label": predictions})
-submission_dfcvit_nov16.to_csv("cvit_predictions1.csv", index=False)
-'''
