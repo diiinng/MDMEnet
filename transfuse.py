@@ -112,10 +112,7 @@ def norm_sigma(x):
 
 class TransfuserBackbone(nn.Module):
     """
-    Multi-scale Fusion Transformer for image + LiDAR feature fusion
-    image_architecture: Architecture used in the image branch. ResNet, RegNet and ConvNext are supported
-    lidar_architecture: Architecture used in the lidar branch. ResNet, RegNet and ConvNext are supported
-    use_velocity: Whether to use the velocity input in the transformer.
+
     """
 
     def __init__(self, config, image_architecture='resnet34', lidar_architecture='resnet18', use_velocity=False, num_classes = 2,use_fad=False):
@@ -238,11 +235,7 @@ class TransfuserBackbone(nn.Module):
 
     def forward(self, image, lidar, velocity):
         '''
-        Image + LiDAR feature fusion using transformers
-        Args:
-            image_list (list): list of input images
-            lidar_list (list): list of input LiDAR BEV
-            velocity (tensor): input velocity from speedometer
+
         '''
 
         if self.image_encoder.normalize:
