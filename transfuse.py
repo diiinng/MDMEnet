@@ -69,46 +69,6 @@ class ResRGBSRMfuser(nn.Module):
         return x
 
 
-# Filter Module
-class Filter(nn.Module):
-    def __init__(self, size, band_start, band_end, use_learnable=True, norm=False):
-        super(Filter, self).__init__()
-        self.use_learnable = use_learnable
-
-        self.base = nn.Parameter(torch.tensor(generate_filter(band_start, band_end, size)), requires_grad=False)
-        if self.use_learnable:
-            self.learnable = nn.Parameter(torch.randn(size, size), requires_grad=True)
-            self.learnable.data.normal_(0., 0.1)
-            # Todo
-            # self.learnable = nn.Parameter(torch.rand((size, size)) * 0.2 - 0.1, requires_grad=True)
-
-        self.norm = norm
-        if norm:
-            self.ft_num = nn.Parameter(torch.sum(torch.tensor(generate_filter(band_start, band_end, size))), requires_grad=False)
-
-
-    def forward(self, x):
-        if self.use_learnable:
-            filt = self.base + norm_sigma(self.learnable)
-        else:
-            filt = self.base
-
-        if self.norm:
-            y = x * filt / self.ft_num
-        else:
-            y = x * filt
-        return y
-# utils
-def DCT_mat(size):
-    m = [[ (np.sqrt(1./size) if i == 0 else np.sqrt(2./size)) * np.cos((j + 0.5) * np.pi * i / size) for j in range(size)] for i in range(size)]
-    return m
-def generate_filter(start, end, size):
-    return [[0. if i + j > end or i + j < start else 1. for j in range(size)] for i in range(size)]
-def norm_sigma(x):
-    return 2. * torch.sigmoid(x) - 1.
-
-
-
 
 class TransfuserBackbone(nn.Module):
     """
