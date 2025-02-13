@@ -641,18 +641,3 @@ class Block(nn.Module):
 
         return x
 
-from config_trafuse import GlobalConfigs
-
-if __name__ == '__main__':
-    root_dir= '../sample_train_data/train'
-    config = GlobalConfigs()
-    config.use_target_point_image = bool(1)
-    config.n_layer = 4
-    config.use_point_pillars = bool(0)
-    config.backbone = 'transFuser'
-
-    model = Transfuser()
-    print(model)
-    model.to('cuda')
-    #summary(model, input_size=(3, 224, 224), batch_size=1, device='cuda')
-    summary(model, input_size=(3, 224, 224), batch_size=1, device='cuda')
