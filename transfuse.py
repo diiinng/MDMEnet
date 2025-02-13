@@ -108,35 +108,7 @@ def norm_sigma(x):
     return 2. * torch.sigmoid(x) - 1.
 
 
-class Res34Res18(nn.Module):
 
-    def __init__(self, config, img_size = 224, num_classes = 2):
-        super().__init__()
-
-        #
-        self.transfuse = TransfuserBackbone(config, 'resnet34', 'resnet18',use_fad=True)
-        self.FAD = FAD_Head(size= img_size)
-
-        self.to_cls_token = nn.Identity()
-
-        
-        self.mlp_head = nn.Sequential(
-            nn.Linear(512, 64 ),  #256
-            nn.ReLU(),
-            #nn.Linear(256, 64),
-            #nn.ReLU(),
-            nn.Linear(64, num_classes)
-        )
-        
-        #self.mlp_head = nn.Sequential(nn.LayerNorm(512), nn.Linear(512, num_classes))
-
-    def forward(self, img, mask=None):
-        img_freq = self.FAD(img)
-        fused_features = self.transfuse(img,img_freq,0)
-        #print('fuse features:', fused_features.shape)#[2,512]? should be [1,512]
-        #x = self.to_cls_token(fused_features[:, 0])
-        x = self.mlp_head(fused_features)
-        return x
 
 class TransfuserBackbone(nn.Module):
     """
